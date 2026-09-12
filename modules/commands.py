@@ -29,15 +29,15 @@ from modules.log import logger
 def help_command(update: dict, args: list[str]) -> None:
 
     message = (
-        "Deal Alert Bot\n\n"
-        "Available Commands:\n\n"
+        "🤖 <b>Deal Alert Bot</b>\n\n"
+        "Available Commands\n\n"
         "/help\n"
         "/status\n"
         "/reload\n"
-        "/showSearchList\n"
-        "/addToList <keyword>\n"
-        "/removeFromList <keyword>\n"
-        "/setFrequency <minutes>"
+        "/show\n"
+        "/add keyword\n"
+        "/remove keyword\n"
+        "/freq minutes"
     )
 
     reply(update, message)
@@ -71,7 +71,7 @@ def reload_command(update: dict, args: list[str]) -> None:
     reply(update, "Configuration reloaded.")
 
 
-def show_search_list_command(update: dict, args: list[str]) -> None:
+def show_command(update: dict, args: list[str]) -> None:
 
     keywords = get_config()["search_keys"]
 
@@ -79,7 +79,7 @@ def show_search_list_command(update: dict, args: list[str]) -> None:
         reply(update, "Search list is empty.")
         return
 
-    message = "Search Keywords\n\n"
+    message = "🔍 <b>Search Keywords</b>\n\n"
 
     for index, keyword in enumerate(keywords, start=1):
         message += f"{index}. {keyword}\n"
@@ -87,10 +87,10 @@ def show_search_list_command(update: dict, args: list[str]) -> None:
     reply(update, message)
 
 
-def add_to_list_command(update: dict, args: list[str]) -> None:
+def add_command(update: dict, args: list[str]) -> None:
 
     if not args:
-        reply(update, "Usage:\n/addToList <keyword>")
+        reply(update, "Usage:\n/add keyword")
         return
 
     keyword = " ".join(args).strip()
@@ -109,10 +109,10 @@ def add_to_list_command(update: dict, args: list[str]) -> None:
     reply(update, f"Added '{keyword}'.")
 
 
-def remove_from_list_command(update: dict, args: list[str]) -> None:
+def remove_command(update: dict, args: list[str]) -> None:
 
     if not args:
-        reply(update, "Usage:\n/removeFromList <keyword>")
+        reply(update, "Usage:\n/remove keyword")
         return
 
     keyword = " ".join(args).strip()
@@ -131,14 +131,15 @@ def remove_from_list_command(update: dict, args: list[str]) -> None:
     reply(update, f"Removed '{keyword}'.")
 
 
-def set_frequency_command(update: dict, args: list[str]) -> None:
+def freq_command(update: dict, args: list[str]) -> None:
 
     if len(args) != 1:
-        reply(update, "Usage:\n/setFrequency <minutes>")
+        reply(update, "Usage:\n/freq minutes")
         return
 
     try:
         minutes = int(args[0])
+
     except ValueError:
         reply(update, "Frequency must be an integer.")
         return
@@ -169,10 +170,10 @@ COMMANDS: dict[str, Callable[[dict, list[str]], None]] = {
     "help": help_command,
     "status": status_command,
     "reload": reload_command,
-    "showsearchlist": show_search_list_command,
-    "addtolist": add_to_list_command,
-    "removefromlist": remove_from_list_command,
-    "setfrequency": set_frequency_command,
+    "show": show_command,
+    "add": add_command,
+    "remove": remove_command,
+    "freq": freq_command,
 }
 
 

@@ -12,8 +12,10 @@ from fastapi import HTTPException
 from fastapi import Request
 
 from modules.commands import dispatch
-from modules.config import get_config
+from modules.config import get_config, reload_config
 from modules.log import logger
+
+reload_config()
 
 app = FastAPI(
     title="Deal Alert Webhook",

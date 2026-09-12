@@ -10,30 +10,28 @@ from __future__ import annotations
 import time
 
 from modules.api import fetch_deals
+from modules.config import get_config, reload_config
+from modules.exceptions import ApiError
+from modules.formatter import format_deal_message
 from modules.log import logger
 from modules.matcher import match_deal, reload_keywords
 from modules.runtime import update_runtime
 from modules.stats import increment_matches, increment_run
 from modules.storage import load_seen, save_seen
 from modules.telegram import send_message
-from modules.config import get_config
-from modules.exceptions import ApiError
-from modules.formatter import format_deal_message
+
 
 def main() -> None:
 
     logger.info("========== Monitor Started ==========")
-
+    reload_config()
     reload_keywords()
 
     start = time.perf_counter()
 
     try:
-
         deals = fetch_deals()
-
     except ApiError as exc:
-
         logger.exception("API request failed.")
 
         update_runtime(
@@ -49,11 +47,8 @@ def main() -> None:
     elapsed_ms = int((time.perf_counter() - start) * 1000)
 
     seen = load_seen()
-
     current_seen = set()
-
     matches = 0
-
     notifications = 0
 
     channel_id = get_config()["telegram"]["channel_id"]
@@ -66,8 +61,10 @@ def main() -> None:
             continue
 
         matches += 1
+        pid = deal.get("productLink") or deal.get("link")
 
-        pid = deal["pid"]
+        if not pid:
+            continue
 
         current_seen.add(pid)
 
@@ -85,7 +82,6 @@ def main() -> None:
     save_seen(current_seen)
 
     increment_run()
-
     increment_matches(matches)
 
     update_runtime(

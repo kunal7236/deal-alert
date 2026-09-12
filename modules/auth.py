@@ -3,17 +3,24 @@ modules/auth.py
 
 Authentication and authorization helpers.
 
-Currently only validates whether a Telegram user is allowed
-to execute administrative commands.
+A user is authorized if they are an administrator or creator
+of the configured Telegram channel.
 """
+
+from __future__ import annotations
+
+import requests
 
 from modules.config import get_config
 from modules.log import logger
 
+_SESSION = requests.Session()
+
 
 def is_admin(user_id: int) -> bool:
     """
-    Check whether a Telegram user is an administrator.
+    Check whether a Telegram user is an administrator
+    of the configured Telegram channel.
 
     Parameters
     ----------
@@ -23,17 +30,61 @@ def is_admin(user_id: int) -> bool:
     Returns
     -------
     bool
-        True if the user is an admin.
+        True if the user is a creator or administrator.
     """
 
-    admin_ids = get_config()["telegram"]["admin_ids"]
+    config = get_config()
 
-    is_authorized = user_id in admin_ids
+    bot_token = config["telegram"]["bot_token"]
+    channel_id = config["telegram"]["channel_id"]
 
-    logger.info(
-        "Admin authentication. user_id=%s authorized=%s",
-        user_id,
-        is_authorized,
+    url = (
+        f"https://api.telegram.org/bot{bot_token}"
+        f"/getChatMember"
     )
 
-    return is_authorized
+    try:
+
+        response = _SESSION.get(
+            url,
+            params={
+                "chat_id": channel_id,
+                "user_id": user_id,
+            },
+            timeout=10,
+        )
+
+        response.raise_for_status()
+
+        payload = response.json()
+
+        if not payload.get("ok"):
+            logger.warning(
+                "getChatMember failed: %s",
+                payload,
+            )
+            return False
+
+        status = payload["result"]["status"]
+
+        authorized = status in (
+            "creator",
+            "administrator",
+        )
+
+        logger.info(
+            "Admin authentication. user_id=%s status=%s authorized=%s",
+            user_id,
+            status,
+            authorized,
+        )
+
+        return authorized
+
+    except requests.RequestException:
+
+        logger.exception(
+            "Unable to verify Telegram administrator."
+        )
+
+        return False

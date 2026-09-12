@@ -33,8 +33,10 @@ def format_deal_message(
 
     title = deal.get("title", "Unknown Product")
     image = deal.get("image", "")
-    product_url = deal.get("productUrl", "#")
 
+   # product_url = deal.get("productUrl", "#")
+
+    product_url = deal.get("productLink") or deal.get("link")
     current_price = _format_price(deal.get("currentPrice"))
     mrp = _format_price(deal.get("mrp"))
 
